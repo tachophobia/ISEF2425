@@ -27,10 +27,12 @@ class DBM:
         # size of one grid block
         self.R1 = h/2
 
-        # 0 = empty, -1 = candidate, 1 = filled
-        self.grid = np.zeros((2*dim-1, 2*dim-1))
+        # 0 = empty, 1 = filled
+        self.dim = dim
+        self.grid = np.zeros((2*dim+1, 2*dim+1))
 
         self.pattern = []
+        self.environment = []
         self.candidates = []
         self.hit_edge = False
 
@@ -63,10 +65,11 @@ class DBM:
             while not self.hit_edge:
                 self.grow_pattern()
                 steps += 1
-            return steps
         else:
             for _ in range(int(steps)):
                 self.grow_pattern()
+        return steps
+            
 
     def add_cell(self, cell):
         self.grid[cell.i, cell.j] = 1
@@ -76,25 +79,75 @@ class DBM:
         neighbors = [p for p in possible_neighbors if 0 < p[0] < self.grid.shape[0] and 0 < p[1] < self.grid.shape[1]]
         if len(possible_neighbors) > len(neighbors):
             self.hit_edge = True
+        # only allow for neighbors in neutral space
         neighbors = [p for p in neighbors if self.grid[p[0], p[1]] == 0]
 
         for n in neighbors:
             self.grid[n[0], n[1]] = -1        
         [self.candidates.append(Cell(p[0], p[1], self.calculate_spawn_potential(p[0], p[1]))) for p in neighbors]
+
+    def add_line_of_charge(self, p1, p2, phi=-1):
+        # create a line starting from p1 to p2
+        x0, y0, x1, y1 = p1[0], p1[1], p2[0], p2[1]
+        dx = abs(x1-x0)
+        sx = [-1, 1][x0 < x1]
+        dy = -abs(y1-y0)
+        sy = [-1, 1][y0 < y1]
+        error = dx + dy
+
+        while True:
+            if not (0 <= x0 < self.grid.shape[0] and 0 <= y0 < self.grid.shape[1]):
+                break
+            cell = Cell(x0, y0, phi)
+            self.grid[x0, y0] = phi
+
+            self.environment.append(cell)
+
+            if (x0 == x1 and y0 == y1):
+                break
+            e2 = 2 * error
+            if e2 > dy:
+                error += dy
+                x0 += sx
+            if e2 < dx:
+                error += dx
+                y0 += sy
+            x0 = int(x0)
+            y0 = int(y0)
+
+    def add_circle_of_charge(self, center, radius, phi=-1):
+        # create a circle centered at center with radius radius
+        x0, y0 = center
+        theta = 0
+        visited = set()
+        while theta < 2*np.pi:
+            x = int(x0 + radius * np.cos(theta))
+            y = int(y0 + radius * np.sin(theta))
+            if (x, y) not in visited and 0 <= x < self.grid.shape[0] and 0 <= y < self.grid.shape[1]:
+                cell = Cell(x, y, phi)
+                self.grid[x, y] = phi
+                self.environment.append(cell)
+            theta += 0.01
+            visited.add((x, y))
         
     def calculate_spawn_potential(self, i, j):
         # equation 10
-        return sum((1-self.R1/np.sqrt((i-c.i)**2+(j-c.j)**2)) for c in self.pattern)
+        neighbor_potential = sum((1-self.R1/np.sqrt((i-c.i)**2+(j-c.j)**2)) for c in self.pattern)
+        environment_potential = sum(c.phi/np.sqrt((i-c.i)**2+(j-c.j)**2) for c in self.environment)
+        return neighbor_potential + environment_potential
     
     def update_potentials(self, cell):
         # equation 11
         for c in self.candidates:
             c.phi += 1 - self.R1 / np.sqrt((cell.i - c.i) ** 2 + (cell.j - c.j) ** 2)
 
-    def show(self):
+    def show(self, show_environment=False):
         img = self.grid
-        img[np.where(img==-1)] = 0
-        plt.imshow(img, cmap='afmhot')
+        if not show_environment:
+            img[np.where(img!=1)] = 0
+            plt.imshow(img, cmap='afmhot')
+        else:
+            plt.imshow(img)
         plt.axis('off')
         plt.show()
     
