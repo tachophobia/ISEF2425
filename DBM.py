@@ -22,7 +22,7 @@ class DBM:
     # based on "Fast Simulation of Laplacian Growth" by Kim et al.
     # fuse breakdown instead of dielectric breakdown simulated
 
-    def __init__(self, eta=1., dim=100, h=1):
+    def __init__(self, eta=1., dim=100, h=1, seed=None):
         self.eta = eta
         # size of one grid block
         self.R1 = h/2
@@ -36,7 +36,10 @@ class DBM:
         self.candidates = []
         self.hit_edge = False
 
-        seed = Cell(dim, dim, 1)
+        if seed:
+            seed = Cell(seed[0], seed[1], 1)
+        else:
+            seed = Cell(dim, dim, 1)
         self.add_cell(seed)
 
     def grow_pattern(self):
@@ -129,6 +132,15 @@ class DBM:
                 self.environment.append(cell)
             theta += 0.01
             visited.add((x, y))
+    
+    def add_rectangle_of_charge(self, p1, p2, phi=-1):
+        x0, y0, x1, y1 = int(p1[0]), int(p1[1]), int(p2[0]), int(p2[1])
+        for x in range(x0, x1):
+            for y in range(y0, y1):
+                if 0 <= x < self.grid.shape[0] and 0 <= y < self.grid.shape[1]:
+                    cell = Cell(x, y, phi)
+                    self.grid[x, y] = phi
+                    self.environment.append(cell)
         
     def calculate_spawn_potential(self, i, j):
         # equation 10
@@ -147,6 +159,8 @@ class DBM:
             img[np.where(img!=1)] = 0
             plt.imshow(img, cmap='afmhot')
         else:
+            img[np.where(img > 1)] = 2
+            img[np.where(img < -1)] = -2
             plt.imshow(img)
         plt.axis('off')
         plt.show()
