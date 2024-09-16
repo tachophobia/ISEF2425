@@ -62,16 +62,24 @@ class DBM:
         cell = self.candidates.pop(idx)
         return cell
         
-    def simulate(self, steps=None):
+    def simulate(self, steps=None, animate=False):
+        frames = []
         if not steps:
             steps = 0
             while not self.hit_edge:
                 self.grow_pattern()
                 steps += 1
+                if animate:
+                    frames.append(self.grid.copy())
         else:
             for _ in range(int(steps)):
                 self.grow_pattern()
-        return steps
+                if animate:
+                    frames.append(self.grid.copy())
+        if frames:
+            return steps, frames
+        else:
+            return steps
             
 
     def add_cell(self, cell):
@@ -167,3 +175,6 @@ class DBM:
     
     def save_grid(self):
         np.save('grid.npy', self.grid)
+    
+    def load_grid(self, path):
+        self.grid = np.load(path)
