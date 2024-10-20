@@ -37,9 +37,10 @@ class LichtenbergFigure:
         self.trigger = trigger
 
     def copy(self, ref=1.):
-        copy = LichtenbergFigure(self.grid.copy(), self.trigger, self.bounds)
+        copy = LichtenbergFigure(self.grid.copy(), self.center, self.bounds)
         copy.scale = self.scale * ref
         copy.rot = self.rot
+        copy.trigger = self.trigger
         return copy
 
 
