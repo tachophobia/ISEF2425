@@ -18,9 +18,9 @@ class Cell:
         return [(self.i+1, self.j), (self.i-1, self.j), (self.i, self.j+1), (self.i, self.j-1), (self.i+1, self.j+1), (self.i+1, self.j-1), (self.i-1, self.j+1), (self.i-1, self.j-1)]
         
 
-class DBM:
+class DielectricBreakdownModel:
     # based on "Fast Simulation of Laplacian Growth" by Kim et al.
-    # fuse breakdown instead of dielectric breakdown simulated
+    # fuse breakdown instead of dielectric breakdown simulated for effectively same result
 
     def __init__(self, eta=1., dim=100, h=1, seed=None):
         self.eta = eta
@@ -62,26 +62,25 @@ class DBM:
         cell = self.candidates.pop(idx)
         return cell
         
-    def simulate(self, steps=None, animate=False):
-        frames = []
+    def simulate(self, steps=None):
         if not steps:
             steps = 0
             while not self.hit_edge:
                 self.grow_pattern()
-                steps += 1
-                if animate:
-                    frames.append(self.grid.copy())
+                steps += 1   
         else:
             for _ in range(int(steps)):
                 self.grow_pattern()
-                if animate:
-                    frames.append(self.grid.copy())
-        if frames:
-            return steps, frames
-        else:
-            return steps
+        return steps
+        
+    def animate(self, steps: int):
+        frames = []
+        for _ in range(steps):
+            self.grow_pattern()
+            frames.append(self.grid.copy())
+        
+        return steps, frames
             
-
     def add_cell(self, cell):
         self.grid[cell.i, cell.j] = 1
         self.pattern.append(cell)
@@ -173,8 +172,8 @@ class DBM:
         plt.axis('off')
         plt.show()
     
-    def save_grid(self):
-        np.save('grid.npy', self.grid)
+    def save(self, path: str):
+        np.save(path, self.grid)
     
-    def load_grid(self, path):
+    def load(self, path: str):
         self.grid = np.load(path)
