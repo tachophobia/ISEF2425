@@ -1,4 +1,3 @@
-import random
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -48,19 +47,17 @@ class DielectricBreakdownModel:
         self.update_potentials(cell)
 
     def choose_candidate(self):
-        min_phi = min(self.candidates, key=lambda c: c.phi).phi
-        max_phi = max(self.candidates, key=lambda c: c.phi).phi
+        phi_values = np.array([c.phi for c in self.candidates])
+        min_phi = np.min(phi_values)
+        max_phi = np.max(phi_values)
+        
+        phi_eta = ((phi_values - min_phi) / (max_phi - min_phi)) ** self.eta
+        phi_eta_sum = np.sum(phi_eta)
+        probabilities = phi_eta / phi_eta_sum
+        
+        idx = np.random.choice(len(self.candidates), p=probabilities)
+        return self.candidates.pop(idx)
 
-        for c in self.candidates:
-            c.phi_eta = ((c.phi-min_phi)/(max_phi-min_phi))**self.eta
-
-        phi_eta_sum = sum(c.phi_eta for c in self.candidates)
-        for c in self.candidates:
-            c.prob = c.phi_eta / phi_eta_sum
-
-        idx = random.choices([*range(len(self.candidates))], weights=[c.prob for c in self.candidates])[0]
-        cell = self.candidates.pop(idx)
-        return cell
         
     def simulate(self, steps=None):
         if not steps:
@@ -93,8 +90,10 @@ class DielectricBreakdownModel:
         neighbors = [p for p in neighbors if self.grid[p[0], p[1]] == 0]
 
         for n in neighbors:
-            self.grid[n[0], n[1]] = -1        
-        [self.candidates.append(Cell(p[0], p[1], self.calculate_spawn_potential(p[0], p[1]))) for p in neighbors]
+            self.grid[n[0], n[1]] = -1
+        
+        for p in neighbors:
+            self.candidates.append(Cell(p[0], p[1], self.calculate_spawn_potential(p[0], p[1])))
 
     def add_line_of_charge(self, p1, p2, phi=-1):
         # create a line starting from p1 to p2
@@ -151,14 +150,22 @@ class DielectricBreakdownModel:
         
     def calculate_spawn_potential(self, i, j):
         # equation 10
-        neighbor_potential = sum((1-self.R1/np.sqrt((i-c.i)**2+(j-c.j)**2)) for c in self.pattern)
-        environment_potential = sum(c.phi/np.sqrt((i-c.i)**2+(j-c.j)**2) for c in self.environment)
+        pattern_coords = np.array([(c.i, c.j) for c in self.pattern])
+        pattern_distances = np.sqrt((i - pattern_coords[:, 0]) ** 2 + (j - pattern_coords[:, 1]) ** 2)
+        neighbor_potential = np.sum(1 - self.R1 / pattern_distances)
+
+        environment_potential = np.sum([c.phi / np.sqrt((i - c.i) ** 2 + (j - c.j) ** 2) for c in self.environment])
         return neighbor_potential + environment_potential
+
     
     def update_potentials(self, cell):
         # equation 11
-        for c in self.candidates:
-            c.phi += 1 - self.R1 / np.sqrt((cell.i - c.i) ** 2 + (cell.j - c.j) ** 2)
+        candidate_coords = np.array([(c.i, c.j) for c in self.candidates])
+        distances = np.sqrt((candidate_coords[:, 0] - cell.i) ** 2 + (candidate_coords[:, 1] - cell.j) ** 2)
+        delta_potentials = 1 - self.R1 / distances
+        for c, delta in zip(self.candidates, delta_potentials):
+            c.phi += delta
+
 
     def show(self, show_environment=False):
         img = self.grid
