@@ -2,10 +2,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class LichtenbergFigure:
-    def __init__(self, grid, bounds):
+    def __init__(self, grid, center, bounds):
         self.grid = grid
         self.Rc = grid.shape[0] // 2
+        self.center = center
         self.bounds = bounds
+
+        self.trigger = self.center
         self.lower, self.upper = self.bounds
 
         self.scale = 1
@@ -15,6 +18,7 @@ class LichtenbergFigure:
         flat = self.grid.flatten()
         indices = np.random.choice(len(flat), p=flat/np.sum(flat), size=n)
         coords = []
+        factor = (self.upper - self.lower) / (self.Rc * 2)
         for idx in indices:
             coord = np.unravel_index(idx, self.grid.shape)
             # 2d rotate the coord about the center (Rc, Rc)
@@ -22,16 +26,18 @@ class LichtenbergFigure:
             coord = np.dot(coord, [[np.cos(self.rot), -np.sin(self.rot)], [np.sin(self.rot), np.cos(self.rot)]]) + self.Rc
             # scale the coord about (Rc, Rc)
             coord = (coord - self.Rc) * self.scale + self.Rc
-            coords.append([self.lower + (self.upper - self.lower) * coord[i] / (self.grid.shape[i] - 1) for i in range(len(coord))])
+            coord = [factor * coord[i] + self.lower + self.trigger[i] - self.center[i] for i in range(len(coord))]
+            coords.append(coord)
         
         return coords
     
-    def rand_transform(self):
+    def rand_transform(self, trigger):
         self.scale = np.random.uniform(0.01, 1)
         self.rot = np.random.uniform(0, 2*np.pi)
+        self.trigger = trigger
 
     def copy(self, ref=1.):
-        copy = LichtenbergFigure(self.grid.copy(), self.bounds)
+        copy = LichtenbergFigure(self.grid.copy(), self.trigger, self.bounds)
         copy.scale = self.scale * ref
         copy.rot = self.rot
         return copy
@@ -49,19 +55,20 @@ class LichtenbergAlgorithm:
             self.filename = kwargs['filename']
         
         self.ref = kwargs.get('ref', 0)
-        self.experience = {"it": [], "fitness": [], "coords": []}
+        self.experience = {"it": [], "fitness": [], "coords": [], "samples": []}
         
     def optimize(self, J, n_iter: int, pop: int):
         if self.M == 2:
             grid = np.load(self.filename)
         
-        lf = LichtenbergFigure(grid, J.bounds())
         trigger = J.center()
         best_coords = trigger
         best_fitness = J.evaluate(*trigger)
 
+        lf = LichtenbergFigure(grid, trigger, J.bounds())
+
         for it in range(n_iter):
-            lf.rand_transform()
+            lf.rand_transform(trigger)
             if not self.ref:
                 samples = lf.sample(pop)
             else:
@@ -80,6 +87,7 @@ class LichtenbergAlgorithm:
             self.experience["it"].append(it)
             self.experience["fitness"].append(best_fitness)
             self.experience["coords"].append(best_coords)
+            self.experience["samples"].extend(samples)
 
             trigger = best_coords
         
@@ -91,5 +99,21 @@ class LichtenbergAlgorithm:
         
         plt.plot(self.experience["it"], self.experience["fitness"])
         plt.xlabel("Iteration")
-        plt.ylabel("Fitness")
+        plt.ylabel("$f_{min}(X)$")
+        plt.title("Convergence")
+        plt.show()
+
+    def plot_historical_search(self):
+        if not self.experience['it']:
+            return
+
+        coords = np.array(self.experience["coords"])
+        samples = np.array(self.experience["samples"])
+
+        plt.scatter(samples[:, 0], samples[:, 1], c='b', marker='.')
+        plt.plot(coords[:-1, 0], coords[:-1, 1], c='r')
+        plt.scatter(coords[-1, 0], coords[-1, 1], c='r', marker='x')
+        plt.xlabel("$x_1$")
+        plt.ylabel("$x_2$")
+        plt.title('Historical Search')
         plt.show()
