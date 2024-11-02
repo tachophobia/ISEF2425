@@ -95,7 +95,7 @@ class BoothFunction(ObjectiveFunction):
         if len(args) != self.dim:
             raise ValueError(f"Expected {self.dim} arguments, got {len(args)}.")
         
-        x = np.array(args)
+        x, y = args
         
         # Booth function formula
         left_term = x + 2y - 7
