@@ -91,7 +91,7 @@ class BoothFunction(ObjectiveFunction):
         return tuple(mean for _ in range(self.dim))
     
     def evaluate(self, *args):
-        """Evaluate the Ackley function for n-dimensional inputs."""
+        """Evaluate the Booth function for n-dimensional inputs."""
         if len(args) != self.dim:
             raise ValueError(f"Expected {self.dim} arguments, got {len(args)}.")
         
