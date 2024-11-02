@@ -74,7 +74,32 @@ class AckleyFunction(ObjectiveFunction):
 
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
-        ax.set_zlabel('Z')
-        ax.set_title('Ackley Function')
-        ax.legend()
-        plt.show()
+
+class BoothFunction(ObjectiveFunction):
+    def __init__(self, dimensions=3):
+        self.dim = dimensions - 1
+        self.lower_bound = -10.0
+        self.upper_bound = 10.0
+    
+    def bounds(self):
+        """Return the bounds of the search space as a tuple of two floats."""
+        return self.lower_bound, self.upper_bound
+    
+    def center(self):
+        """Return the center of the bounded search space for the given dimension."""
+        mean = (self.lower_bound + self.upper_bound) / 2
+        return tuple(mean for _ in range(self.dim))
+    
+    def evaluate(self, *args):
+        """Evaluate the Ackley function for n-dimensional inputs."""
+        if len(args) != self.dim:
+            raise ValueError(f"Expected {self.dim} arguments, got {len(args)}.")
+        
+        x = np.array(args)
+        
+        # Booth function formula
+        left_term = x + 2y - 7
+        right_term = 2x + y - 5
+        result = left_term**2 + right_term**2
+        
+        return result
