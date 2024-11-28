@@ -98,8 +98,8 @@ class BoothFunction(ObjectiveFunction):
         x, y = args
         
         # Booth function formula
-        left_term = x + 2y - 7
-        right_term = 2x + y - 5
+        left_term = x + 2*y - 7
+        right_term = 2*x + y - 5
         result = left_term**2 + right_term**2
         
         return result
