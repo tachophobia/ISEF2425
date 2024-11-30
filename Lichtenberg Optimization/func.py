@@ -21,6 +21,7 @@ class ObjectiveFunction(ABC):
 
 class AckleyFunction(ObjectiveFunction):
     def __init__(self, dimensions=3):
+        """Initialize the dimensions and bounds for evaluating the Ackley function."""
         self.dim = dimensions - 1
         self.lower_bound = -32.768
         self.upper_bound = 32.768
@@ -30,12 +31,23 @@ class AckleyFunction(ObjectiveFunction):
         return self.lower_bound, self.upper_bound
     
     def center(self):
-        """Return the center of the bounded search space for the given dimension."""
+        """Return the center of the bounded search space for the given dimension as a tuple."""
         mean = (self.lower_bound + self.upper_bound) / 2
         return tuple(mean for _ in range(self.dim))
     
     def evaluate(self, *args):
-        """Evaluate the Ackley function for n-dimensional inputs."""
+        """
+        Evaluate the Ackley function for n-dimensional inputs.
+        
+        Args:
+            args (list): a list of input values with length equal to the number of dimensions.
+
+        Returns:
+            int: the output of the Ackley function given the args.    
+        
+        Raises:
+            ValueError: caused by a mismatch between given and expected dimensions.
+        """
         if len(args) != self.dim:
             raise ValueError(f"Expected {self.dim} arguments, got {len(args)}.")
         
@@ -54,7 +66,9 @@ class AckleyFunction(ObjectiveFunction):
         return result
     
     def plot3d(self, *points):
-        """Plot the Ackley function in 3D for visualization."""
+        """
+        Plot the Ackley function in 3D for visualization.
+        """
         if self.dim != 2:
             raise ValueError("Plotting is only supported for 3D functions.")
 
@@ -77,6 +91,7 @@ class AckleyFunction(ObjectiveFunction):
 
 class BoothFunction(ObjectiveFunction):
     def __init__(self):
+        """Initialize the dimensions and bounds for evaluating the Booth function."""
         self.dim = 2  # The Booth function is defined in a 2D space
         self.lower_bound = -10
         self.upper_bound = 10
@@ -91,7 +106,18 @@ class BoothFunction(ObjectiveFunction):
         return tuple(mean for _ in range(self.dim))
     
     def evaluate(self, *args):
-        """Evaluate the Booth function for 2-dimensional inputs."""
+        """
+        Evaluate the Booth function for 2-dimensional inputs.
+        
+        Args:
+            args (list): a list of input values of length 2.
+
+        Returns:
+            int: the output of the Booth function given the args.    
+        
+        Raises:
+            ValueError: raised when list of args is not 2-dimensional.
+        """
         if len(args) != self.dim:
             raise ValueError(f"Expected {self.dim} arguments, got {len(args)}.")
         
@@ -103,7 +129,9 @@ class BoothFunction(ObjectiveFunction):
         return result
     
     def plot3d(self, *points):
-        """Plot the Booth function in 3D for visualization."""
+        """
+        Plot the Booth function in 3D for visualization.
+        """
         if self.dim != 2:
             raise ValueError("Plotting is only supported for 2D functions.")
 
