@@ -6,46 +6,53 @@ from abc import ABC,abstractmethod
 class Environment(ABC):
     @abstractmethod
     def set(self, rewards, actions):
-        """sets rewards and actions for the environment"""
+        """Set rewards and actions for the environment."""
         pass
 
     @abstractmethod
     def setState(self,s):
-        """sets a new state (often the position of the agent)"""
+        """Set to a new state s (often the position of the agent)."""
         pass
 
     @abstractmethod
     def getState(self):
-        """returns the current state"""
+        """Return the current state."""
         pass
 
     @abstractmethod
     def isTerminal(self,s):
-        """evaluates whether it is a terminal state"""
+        """Evaluate whether state s is terminal."""
         pass
 
     @abstractmethod
     def getNextState(self,s,a):
-        """given a current state and an action, returns the next state"""
+        """Return next state given current state s and action a."""
         pass
 
     @abstractmethod
     def action(self,a):
-        """executes an action"""
+        """Execute action a."""
         pass
 
     @abstractmethod
     def undoAction(self,a):
-        """undoes action a"""
+        """Undo action a."""
         pass
 
     @abstractmethod
     def allStates(self):
-        """returns the set of all states and corresponding rewards"""
+        """Returns the set of all states and corresponding rewards."""
         pass
 
 class Submarine:
     def __init__(self,rows,cols,startPos):
+        """Initialize the size of the environment and the starting position of the agent.
+        
+        Args:
+            rows (int): the height of the environment.
+            cols (int): the width of the environment.
+            startPos (tuple): the starting position of the agent.
+        """
         self.rows=rows
         self.cols=cols
         self.pos=startPos
@@ -55,10 +62,22 @@ class Submarine:
     def setState(self, s):
         self.pos=s  
     def getState(self):
+        """Return the state the agent is in as a tuple representing position."""
         return self.pos
     def isTerminal(self,s):
+        """Return a bool of whether the state is terminal, based on whether there are any possible actions in the state s."""
         return s not in self.actions
     def getNextState(self, s, a):
+        """
+        Return the next state.
+        
+        Args:
+            s (tuple): the initial state.
+            a (string): the action taken.
+            
+        Returns:
+            tuple: the final state.
+        """
         i,j=s[0],s[1]
         if a in self.actions[s]:
             if a=='U': i-=1
@@ -67,6 +86,7 @@ class Submarine:
             elif a=='L': j-=1
         return (i,j)
     def action(self,a):
+        """Update the position of the agent based on action a and return the reward associated with the new position."""
         if a in self.actions[self.pos]:
             if a=='U': self.pos[0]-=1
             elif a=='D': self.pos[0]+=1
@@ -74,6 +94,7 @@ class Submarine:
             elif a=='L': self.pos[1]-=1
         return self.rewards.get(self.pos,0)
     def undoAction(self, a):
+        """Update the position of the agent by doing the reverse of action a."""
         if a in self.actions[self.pos]:
             if a=='U': self.pos[0]+=1
             elif a=='D': self.pos[0]-=1
@@ -81,8 +102,21 @@ class Submarine:
             elif a=='L': self.pos[1]+=1
         assert(self.getState() in self.allStates())
     def allStates(self):
+        """Return the set of all possible states, including terminal ones."""
         return set(self.actions.keys()) | set(self.rewards.keys())
     def generateRandom(rowNum,colNum,chanceToDecrease):
+        """
+        Generate a random environment of specified size.
+        
+        Args:
+            rowNum (int): the height of the environment.
+            colNum (int): the width of the environment.
+            chanceToDecrease (float): the probability (1-100) of going down a level when assigning rewards.
+            
+        Returns:
+            dict {tuple: int}: the value of the reward given for being in each state.
+            dict {tuple: set}: the set of possible actions in each state.
+        """
         rewards = {(0,1):1}  #all indexed column, row (i,j)
         actions = {}
         topOfCol={0:1}
@@ -116,6 +150,7 @@ class Submarine:
         pass
     
     def printSub(self):
+        """Print the environment grid with associated rewards in each position, or an X for impossible states."""
         for j in range(self.rows):
             for i in range(self.cols):
                 if (i,j) in self.rewards: 
