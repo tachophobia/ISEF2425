@@ -14,6 +14,18 @@ class DQNAgent(Agent):
                  hidden_layers=5, gamma=0.99, tau=0.005,
                  min_epsilon=0.1, epsilon_decay=0.999,
                  batch_size=32, buffer_capacity=10000):
+        """Initialize a deep Q-learning agent.
+        
+        Args:
+            input_dim (int): the size of the state space.
+            output_dim (int): the size of the action space.
+            hidden_dim (int): the dimensions of the hidden layers of the neural network.
+            hidden_layers (int): the depth, i.e., number of hidden layers, in the neural network.
+            gamma (float): the future reward discount factor.
+            tau (float): the coefficient for updating the weights in the neural network.
+            min_epsilon (float): the minimum percent chance of exploration.
+            epsilon_decay (float): the factor by which to decrease epsilon each time.
+            batch_size (int): the size of each sample taken from the buffer of experienced transitions."""
         super().__init__(buffer_capacity)
         self.batch_size = batch_size
         self.gamma = gamma
@@ -34,16 +46,7 @@ class DQNAgent(Agent):
         self.device = self.target_net.device
     
     def select_action(self, state, explore=False):
-        """
-        Select the next action either from existing policy or random.
-        
-        Args:
-            state ([DATA TYPE]): the current state of the agent.
-            explore (bool): whether exploration is allowed.
-
-        Returns:
-            [DATA TYPE]: the selected action.
-        """
+        """Select and return the next action either from existing policy or random, which occurs a percent of time determined by epsilon."""
         if explore and random.random() < self.epsilon:
             action = torch.tensor([[random.randrange(self.action_dim)]], device=self.device, dtype=torch.long)
         else:
