@@ -34,6 +34,16 @@ class DQNAgent(Agent):
         self.device = self.target_net.device
     
     def select_action(self, state, explore=False):
+        """
+        Select the next action either from existing policy or random.
+        
+        Args:
+            state ([DATA TYPE]): the current state of the agent.
+            explore (bool): whether exploration is allowed.
+
+        Returns:
+            [DATA TYPE]: the selected action.
+        """
         if explore and random.random() < self.epsilon:
             action = torch.tensor([[random.randrange(self.action_dim)]], device=self.device, dtype=torch.long)
         else:
