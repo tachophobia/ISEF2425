@@ -1,31 +1,32 @@
 import numpy as np
 import random
 import matplotlib.pyplot as plt
+import gym
 from abc import ABC,abstractmethod
 
 class Environment(ABC):
     @abstractmethod
-    def set(self, rewards, actions):
+    def set_rewards(self, rewards, actions):
         """Set rewards and actions for the environment."""
         pass
 
     @abstractmethod
-    def setState(self,s):
+    def set_state(self,s):
         """Set to a new state s (often the position of the agent)."""
         pass
 
     @abstractmethod
-    def getState(self):
+    def get_state(self):
         """Return the current state."""
         pass
 
     @abstractmethod
-    def isTerminal(self,s):
+    def is_terminal(self,s):
         """Evaluate whether state s is terminal."""
         pass
 
     @abstractmethod
-    def getNextState(self,s,a):
+    def get_next_state(self,s,a):
         """Return next state given current state s and action a."""
         pass
 
@@ -35,12 +36,12 @@ class Environment(ABC):
         pass
 
     @abstractmethod
-    def undoAction(self,a):
+    def undo_action(self,a):
         """Undo action a."""
         pass
 
     @abstractmethod
-    def allStates(self):
+    def all_states(self):
         """Returns the set of all states and corresponding rewards."""
         pass
 
@@ -142,12 +143,17 @@ class Submarine:
         return actions,rewards
 
     def standardSubmarine():
-   #     e = Submarine(11,10,(0,0))
-    #    actions,rewards = e.generateRandom(11,10,95)
-     #   e.set(rewards,actions)
-      #  e.printSub
-       # return e
-        pass
+        rows=11
+        cols=10
+        actions,rewards = generateRandom(11,10,80)
+        for j in range(rows):
+                for i in range(cols):
+                    if (i,j) in rewards: 
+                        st = f"{rewards[i,j]}"
+                        a=len(st)
+                        print(f"{rewards[i,j]}{' '*(3-a)}",end="")
+                    else:print("X  ",end="")
+                print()
     
     def printSub(self):
         """Print the environment grid with associated rewards in each position, or an X for impossible states."""
@@ -159,15 +165,103 @@ class Submarine:
                     print(f"{self.rewards[i,j]}{' '*(3-a)}",end="")
                 else:print("X  ",end="")
             print()
+    
 
-    rows=11
-    cols=10
-    actions,rewards = generateRandom(11,10,80)
-    for j in range(rows):
-            for i in range(cols):
-                if (i,j) in rewards: 
-                    st = f"{rewards[i,j]}"
-                    a=len(st)
-                    print(f"{rewards[i,j]}{' '*(3-a)}",end="")
-                else:print("X  ",end="")
-            print()
+
+class ContinuousSubmarine:
+    def __init__(self,width,height,start_pos,tWidth,tHeight,max_y,action_space):
+        self.w=width #width of environment
+        self.h=height #height of environment
+        self.tW=tWidth #width of terminal areas
+        self.tH=tHeight #height of terminal areas
+        self.pos=start_pos #always in (y,x) form, this time it's floats rather than ints
+        self.max_y=max_y #dictionary describing the height of the "seafloor" in form {xPos:maxY} -- xPos and maxY are both ints
+        self.action_space=action_space
+
+    def set_rewards(self,rewards):
+        self.rewards = rewards
+
+    def set_state(self, s):
+        self.pos=s  
+
+    def get_state(self):
+        """Return the state the agent is in as a tuple representing position."""
+        return self.pos
+
+    def is_terminal(self,s): #given pos s, return if it's terminal
+        return to_box(s) in self.rewards
+
+    def get_next_state(self, s, a): #s-->current state; a-->action in form (theta,magnitude) tuple; a vector representing the action; a will always be valid given s and the environment
+        next_pos=s
+        delta_X=np.cos(a[0])*a[1]
+        delta_Y=np.sin(a[0])*a[1]
+        next_pos[0]=s[0]+delta_Y
+        next_pos[1]=s[1]+delta_X
+        return next_pos
+    
+    def action(self,a): #a-->action in form (theta,magnitude) tuple; a vector representing the action; action will always be valid given s and the environment
+        """Update the position of the agent based on action a and return the reward associated with the new position."""
+        delta_X=np.cos(a[0])*a[1]
+        delta_Y=np.sin(a[0])*a[1]
+        self.pos[0]+=delta_Y
+        self.pos[1]+=delta_X
+        return self.rewards.get(to_box(self.pos),a[1])  #the agent loses reward scaling with the size of the movement
+
+    def to_box(pos): #takes pos and converts it to a coordinate representing the larger box
+        y,x=int(pos[0]),int(pos[1])
+        return ((y//5)*5,(x//5)*5)
+
+    def undo_action(self, a):
+        """Update the position of the agent by doing the reverse of action a."""
+        delta_X=np.cos(a[0])*a[1]
+        delta_Y=np.sin(a[0])*a[1]
+        self.pos[0]-=delta_Y
+        self.pos[1]-=delta_X
+        assert(self.get_State()[0]>=0 and self.get_State()[0]<=self.h and self.get_State()[1]>=0 and self.get_State()[1<=w])
+
+    def get_terminal_states(self):  #returns the top-left corners of each terminal box; combined with tW and tH, this can be used to determine if a pos is terminal
+        return [key for key in self.rewards]
+
+    def is_valid_action(self,a):
+        b= a[0]<2*np.pi and a[0]>0 and a[1]<1.5 and a[1]>.5
+        if not b:return False
+        next_state = get_next_state(self,self.pos,a)
+        if next_state[1]>self.w or next_state[1]<0 or next_state[0]<0: return False
+        next_state_to_box=to_box(next_state)
+        if next_state[0]>=self.max_y[next_state_to_box[1]]:return False
+        return True
+
+
+    def standard_env():
+        tW=5
+        tH=5
+        w=50
+        h=55
+        start_pos=(0,0)
+        rewards={(5,0):1,(10,5):2,(15,10):3,(20,15):5,(20,20):8,(20,25):16,(35,30):24,(35,35):50,(45,40):74,(50,45):124}
+        max_y={0:10,5:15,10:20,15:25,20:25,25:25,30:40,35:40,40:50,45:55} 
+        action_space=(gym.spaces.Box(0,2*(np.pi)),gym.spaces.Box(.5,1.5))
+        
+        
+
+        grid = ["."]*(w*h)
+        for x in range(w):
+            for y in range(h):
+                if ((y//5)*5,(x//5)*5) in rewards:
+                    grid[x+y*w]="t"
+                elif y>=max_y[(x//5)*5]:
+                    grid[x+y*w]="X"
+        print("\n".join(["".join(grid[i:i+w]) for i in range(0,w*h,w)]))
+
+    
+    def print_grid():
+        pass
+    
+    
+    standardEnv()
+
+
+
+
+    
+    
