@@ -99,11 +99,10 @@ class DQNAgent(Agent):
         self.target_net.eval()
     
 class DQNTrainer:
-    def __init__(self, env, agent, featurizer,  batch_size=256, gamma=0.99):
+    def __init__(self, env, agent, featurizer, gamma=0.99):
         self.env = env
         self.agent = agent
         self.featurizer = featurizer
-        self.batch_size = batch_size
         self.gamma = gamma
         self.losses = []
         self.durations = []
