@@ -14,14 +14,14 @@ class ContinuousSubmarine(gym.Env):
         defaults = {
             'width': 50,
             'height': 55,
-            'start_pos': (0, 0),
+            'start_pos': (1, 1),
             'terminal_width': 5,
             'terminal_height': 5,
             'max_y': {0: 10, 5: 15, 10: 20, 15: 25, 20: 25, 25: 25, 30: 40, 35: 40, 40: 50, 45: 55},
             'rewards': {(5, 0): 1, (10, 5): 2, (15, 10): 3, (20, 15): 5, (20, 20): 8, (20, 25): 16, (35, 30): 24, (35, 35): 50, (45, 40): 74, (50, 45): 124},
-            'max_timesteps': 1000,
-            'delta_t': 0.3,
-            'drag_coefficient': 0.1
+            'max_timesteps': 500,
+            'delta_t': 0.1,
+            'drag_coefficient': 0.05
         }
         params = {**defaults, **kwargs}
 
@@ -78,13 +78,10 @@ class ContinuousSubmarine(gym.Env):
         self.state[3] = vx
         self.timestep += 1
         
-        # Clip state to environment bounds
-        self.state[0] = max(0, min(self.state[0], self.height))
-        self.state[1] = max(0, min(self.state[1], self.width))
-        
         box = self._to_box(self.state[:2])
 
-        terminal = box in self.rewards
+        bounded = 0 <= self.state[0] <= self.height and 0 <= self.state[1] <= self.width
+        terminal = box in self.rewards or not bounded
         reward = self.rewards.get(box, -action[1])
 
         truncated = self.timestep > self.max_timesteps
@@ -131,7 +128,56 @@ class ContinuousSubmarine(gym.Env):
             return False
         next_box = self._to_box([next_y, next_x])
         return next_y <= self.max_y.get(next_box[1], self.height)
+    
+    def render(self, mode="human"):
+        """Render the environment based on the mode."""
+        if not hasattr(self, "fig"):
+            self.fig, self.ax = plt.subplots(figsize=(10, 8))
+            if mode != 'human':
+                plt.close(self.fig)
 
-# Example usage
+        self.ax.clear()
+
+        # Draw the seafloor boundaries
+        for x in range(0, self.width + 1, self.terminal_width):
+            max_y = self.max_y.get(x, self.height)
+            self.ax.add_patch(Rectangle((x, max_y), self.terminal_width, self.height - max_y, color='brown', alpha=0.6))
+
+        # Draw the reward regions
+        for (y, x), reward in self.rewards.items():
+            self.ax.add_patch(Rectangle((x, y), self.terminal_width, self.terminal_height, color='green', alpha=0.5))
+            self.ax.text(x + self.terminal_width / 2, y + self.terminal_height / 2, f"{reward}", color='black', ha='center', va='center')
+
+        y, x, vy, vx = self.state
+        self.ax.plot(x, y, 'ro', markersize=10, label='Submarine')
+        self.ax.quiver(x, y, vx, vy, angles='xy', scale_units='xy', scale=1, color='black', label='Velocity', width=0.005)
+
+
+        self.ax.set_xlim(0, self.width)
+        self.ax.set_ylim(0, self.height)
+        self.ax.invert_yaxis() 
+        self.ax.set_xlabel("X")
+        self.ax.set_ylabel("Y")
+        self.ax.set_title("Submarine Environment")
+        self.ax.text(0.85, 0.95, f"Timestep: {self.timestep}", transform=self.ax.transAxes)
+        self.ax.grid(True)
+        if mode == "rgb_array":
+            buf = io.BytesIO()
+            self.fig.savefig(buf, format="png")
+            buf.seek(0)
+            image = plt.imread(buf)
+            buf.close()
+            return image
+        elif mode == 'human':
+            plt.pause(0.05)
+
+
 if __name__ == "__main__":
     env = ContinuousSubmarine()
+    state = env.reset()
+    done = False
+
+    while not done:
+        action = env.action_space.sample()
+        state, reward, done, _, _ = env.step(action)
+        env.render(mode='human')
