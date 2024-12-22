@@ -105,7 +105,7 @@ class Submarine:
     def allStates(self):
         """Return the set of all possible states, including terminal ones."""
         return set(self.actions.keys()) | set(self.rewards.keys())
-    def generateRandom(rowNum,colNum,chanceToDecrease):
+    def generateRandom(self, rowNum,colNum,chanceToDecrease):
         """
         Generate a random environment of specified size.
         
@@ -142,10 +142,10 @@ class Submarine:
                 j+=1
         return actions,rewards
 
-    def standardSubmarine():
+    def standardSubmarine(self):
         rows=11
         cols=10
-        actions,rewards = generateRandom(11,10,80)
+        actions,rewards = self.generateRandom(11,10,80)
         for j in range(rows):
                 for i in range(cols):
                     if (i,j) in rewards: 
@@ -190,28 +190,28 @@ class ContinuousSubmarine(gym.Env):
         return self.state
 
     def is_terminal(self,s): #given pos s, return if it's terminal
-        return to_box(s) in self.rewards
+        return self.to_box(s) in self.rewards
 
     def get_next_state(self, s, a): #s-->current state; a-->action in form (theta,magnitude) tuple; a vector representing the action; a will always be valid given s and the environment
         next_pos=s
-        delta_X,delta_Y,vX,vY = CAKE(a)
+        delta_X,delta_Y,vX,vY = self.CAKE(a)
         next_pos[0][0]=s[0][0]+delta_Y
         next_pos[0][1]=s[0][1]+delta_X
         next_pos[1]=vY
         next_pos[2]=vX
         return next_pos
     
-    def step(a): #a-->action in form (theta,magnitude) tuple; a vector representing the action; action will always be valid given s and the environment; magnitude is magnitude of the force
-        if is_valid_action(a): 
+    def step(self, a): #a-->action in form (theta,magnitude) tuple; a vector representing the action; action will always be valid given s and the environment; magnitude is magnitude of the force
+        if self.is_valid_action(a): 
             self.last_pos = self.state
-            delta_X,delta_Y,vX,vY = CAKE(a)
+            delta_X,delta_Y,vX,vY = self.CAKE(a)
             self.state[0][0]+=delta_Y
             self.state[0][1]+=delta_X
             self.state[1]=vY
             self.state[2]=vX
             self.time_steps+=1
-            return (self.state, self.rewards.get(to_box(self.state[0]),-1*a[1]), is_terminal(self.state[0]),self.time_steps>1000,{})  #the agent loses reward scaling with the size of the movement; the return is in line with Env.step's API
-        delta_X,delta_Y,vX,vY = CAKE(a)
+            return (self.state, self.rewards.get(self.to_box(self.state[0]),-1*a[1]), self.is_terminal(self.state[0]),self.time_steps>1000,{})  #the agent loses reward scaling with the size of the movement; the return is in line with Env.step's API
+        delta_X,delta_Y,vX,vY = self.CAKE(a)
         self.state[0][0]+=delta_Y
         self.state[0][1]+=delta_X
         self.state[1]=vY
@@ -235,9 +235,9 @@ class ContinuousSubmarine(gym.Env):
     def is_valid_action(self,a):
         b= a[0]<2*np.pi and a[0]>0 and a[1]<1.5 and a[1]>.5
         if not b:return False
-        next_state = get_next_state(self,self.state,a)
+        next_state = self.get_next_state(self,self.state,a)
         if next_state[1]>self.w or next_state[1]<0 or next_state[0]<0: return False
-        next_state_to_box=to_box(next_state)
+        next_state_to_box=self.to_box(next_state)
         if next_state[0]>=self.max_y[next_state_to_box[1]]:return False
         return True
 
@@ -274,9 +274,6 @@ class ContinuousSubmarine(gym.Env):
     
     def print_grid():
         pass
-    
-    
-    standard_env()
 
 
 
