@@ -29,18 +29,18 @@ class Agent(ABC, ReplayBuffer):
         super().__init__(buffer_capacity)
 
     @abstractmethod
-    def select_action(self, state):
+    def act(self, state):
         """Select an action according to the agent's policy."""
         pass
 
     @abstractmethod
-    def update(self):
+    def learn(self):
         """Update the weights based on the agent's experience in buffer."""
         pass
 
 class FeedForwardNN(torch.nn.Module):
     "The neural network function approximator."
-    def __init__(self, input_dim, output_dim, hidden_dim, hidden_layers=1):
+    def __init__(self, input_dim, output_dim, hidden_dim, hidden_layers=1, activation=""):
         """Initialize the neural network.
         
         Args:
@@ -54,26 +54,37 @@ class FeedForwardNN(torch.nn.Module):
             [torch.nn.Linear(hidden_dim, hidden_dim) for _ in range(hidden_layers)]
         )
         self.output_layer = torch.nn.Linear(hidden_dim, output_dim)
+       
+        self.activation = None
+        if activation == "relu":
+            self.activation = torch.nn.ReLU()
+        elif activation == "tanh":
+            self.activation = torch.nn.Tanh()
+        elif activation == "sigmoid":
+            self.activation = torch.nn.Sigmoid()
 
         self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
         self.to(self.device)
 
     def forward(self, x):
-        """Run x (in this context a state) through the weights of the network and return the predicted output, the reward."""
+        """Propagate an input through the weights of the network and return a predicted output."""
         x = torch.relu(self.input_layer(x.to(self.device)))
         for layer in self.hidden_layers:
             x = torch.relu(layer(x))
-        return torch.relu(self.output_layer(x))
+        out = self.output_layer(x)
+        if self.activation:
+            return self.activation(out)
+        return out
 
     def save(self, filepath):
-        """Save the state dictionary to the specified location."""
+        """Save the weights dictionary to the specified location."""
         torch.save(self.state_dict(), filepath)
 
     def load(self, filepath):
-        """Load the state dictionary from the specified file."""
+        """Load the weights dictionary from the specified file."""
         self.load_state_dict(torch.load(filepath, weights_only=True))
 
-class Featurizer:
+class StandardScaler:
     def __init__(self, input_dim):
         self.mean = np.zeros(input_dim)
         self.var = np.ones(input_dim)
@@ -86,6 +97,11 @@ class Featurizer:
         self.var += (state - self.mean) ** 2 / self.count
         normalized_state = (state - self.mean) / np.sqrt(self.var + 1e-8)
         return torch.tensor(normalized_state, dtype=torch.float32).unsqueeze(0)
+    
+    def transform_action(self, action, lower, upper):
+        x_min, x_max = -1, 1
+        x = np.clip(action[0].cpu().detach().numpy(), x_min, x_max)
+        return lower + (upper - lower) * (x - x_min) / (x_max - x_min)
     
     def reset(self):
         self.mean = np.zeros(1)
