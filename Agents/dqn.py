@@ -33,16 +33,16 @@ class DQNAgent(Agent):
         self.criterion = torch.nn.SmoothL1Loss()
         self.device = self.target_net.device
     
-    def select_action(self, state, explore=False):
+    def act(self, state, explore=False):
         """
-        Select the next action either from existing policy or random.
+        Select the next action based on the agent's policy.
         
         Args:
-            state ([DATA TYPE]): the current state of the agent.
-            explore (bool): whether exploration is allowed.
+            state: the current state of the agent.
+            explore: whether exploration is allowed.
 
         Returns:
-            [DATA TYPE]: the selected action.
+            the selected action.
         """
         if explore and random.random() < self.epsilon:
             action = torch.tensor([[random.randrange(self.action_dim)]], device=self.device, dtype=torch.long)
@@ -62,7 +62,7 @@ class DQNAgent(Agent):
         if self.epsilon > self.min_epsilon:
             self.epsilon *= self.decay
     
-    def update(self):
+    def learn(self):
         if len(self) < self.batch_size:
             return
         
@@ -91,6 +91,9 @@ class DQNAgent(Agent):
         loss.backward()
         self.optimizer.step()
         torch.nn.utils.clip_grad_value_(self.policy_net.parameters(), 100)
+        
+        self.step()
+
         return loss.item()
     
     def load(self, filepath):
@@ -115,7 +118,7 @@ class DQNTrainer:
         total_reward = 0.
         frames = []
         while not done:
-            action = self.agent.select_action(state, explore=False)
+            action = self.agent.act(state, explore=False)
 
             next_state, reward, terminated, truncated, _ = self.env.step(self.env.action_space[action])
             done = terminated or truncated
@@ -141,7 +144,7 @@ class DQNTrainer:
 
             done = False
             for t in count():
-                action = self.agent.select_action(state, explore=True)
+                action = self.agent.act(state, explore=True)
 
                 next_state, reward, terminated, truncated, _ = self.env.step(self.env.action_space[action])
                 done = terminated or truncated
@@ -153,10 +156,9 @@ class DQNTrainer:
 
                 state = next_state
 
-                loss = self.agent.update()
+                loss = self.agent.learn()
                 if loss is not None:
                     self.losses.append(loss)
-                self.agent.step()
 
                 if done:
                     self.durations.append(t + 1)
