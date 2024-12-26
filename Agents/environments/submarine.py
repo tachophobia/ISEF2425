@@ -20,8 +20,9 @@ class ContinuousSubmarine(gym.Env):
             'max_y': {0: 10, 5: 15, 10: 20, 15: 25, 20: 25, 25: 25, 30: 40, 35: 40, 40: 50, 45: 55},
             'rewards': {(5, 0): 1, (10, 5): 2, (15, 10): 3, (20, 15): 5, (20, 20): 8, (20, 25): 16, (35, 30): 24, (35, 35): 50, (45, 40): 74, (50, 45): 124},
             'max_timesteps': 500,
-            'delta_t': 0.1,
-            'drag_coefficient': 0.05
+            'delta_t': 0.2,
+            'drag_coefficient': 0.05,
+            'time_penalty': 0.1
         }
         params = {**defaults, **kwargs}
 
@@ -32,7 +33,7 @@ class ContinuousSubmarine(gym.Env):
         self.terminal_height = params['terminal_height']
 
         # Initial state: [y, x, vy, vx]
-        self.initial_state = [*params['start_pos'], 0, 0]
+        self.initial_state = (*params['start_pos'], 0, 0)
         self.state = self.initial_state
 
         # Seafloor boundary represented as {x: max_y}
@@ -40,6 +41,9 @@ class ContinuousSubmarine(gym.Env):
 
         # Rewards for terminal areas
         self.rewards = params['rewards']
+        
+        # Time penalty for each timestep
+        self.time_penalty = params['time_penalty']
 
         # Action space: [theta (0 to 2*pi), magnitude (0.05 to 1.5)]
         self.action_space = spaces.Box(
@@ -63,7 +67,7 @@ class ContinuousSubmarine(gym.Env):
 
     def reset(self):
         """Reset the environment to the initial state."""
-        self.state = self.initial_state
+        self.state = [*self.initial_state]
         self.timestep = 0
         return np.array(self.state, dtype=np.float32), {} # return the state and info
 
@@ -82,7 +86,7 @@ class ContinuousSubmarine(gym.Env):
 
         bounded = 0 <= self.state[0] <= self.height and 0 <= self.state[1] <= self.width
         terminal = box in self.rewards or not bounded
-        reward = self.rewards.get(box, -1) # penalize the agent for each timestep spent
+        reward = self.rewards.get(box, -self.time_penalty) # penalize the agent for each timestep spent
 
         truncated = self.timestep > self.max_timesteps
         done = terminal or truncated
@@ -129,11 +133,11 @@ class ContinuousSubmarine(gym.Env):
         next_box = self._to_box([next_y, next_x])
         return next_y <= self.max_y.get(next_box[1], self.height)
     
-    def render(self, mode="human"):
+    def render(self, mode="rgb_array"):
         """Render the environment based on the mode."""
         if not hasattr(self, "fig"):
             self.fig, self.ax = plt.subplots(figsize=(10, 8))
-            if mode != 'human':
+            if mode != "human":
                 plt.close(self.fig)
 
         self.ax.clear()
@@ -149,7 +153,7 @@ class ContinuousSubmarine(gym.Env):
             self.ax.text(x + self.terminal_width / 2, y + self.terminal_height / 2, f"{reward}", color='black', ha='center', va='center')
 
         y, x, vy, vx = self.state
-        self.ax.plot(x, y, 'ro', markersize=10, label='Submarine')
+        self.ax.plot(x, y, 'bo', markersize=10, label='Submarine')
         self.ax.quiver(x, y, vx, vy, angles='xy', scale_units='xy', scale=1, color='black', label='Velocity', width=0.005)
 
 
@@ -167,8 +171,9 @@ class ContinuousSubmarine(gym.Env):
             buf.seek(0)
             image = plt.imread(buf)
             buf.close()
+            image = (image * 255).astype(np.uint8)
             return image
-        elif mode == 'human':
+        elif mode == "human":
             plt.pause(0.05)
 
 
