@@ -23,10 +23,10 @@ class LichtenbergFigure:
             coord = np.unravel_index(idx, self.grid.shape)
             # 2d rotate the coord about the center (Rc, Rc)
             coord = np.array(coord) - self.Rc
-            coord = np.dot(coord, [[np.cos(self.rot), -np.sin(self.rot)], [np.sin(self.rot), np.cos(self.rot)]]) + self.Rc
+            coord = np.dot(coord, [[np.cos(self.rot), -np.sin(self.rot)], [np.sin(self.rot), np.cos(self.rot)]]) + self.Rc # 2d rotation
             # scale the coord about (Rc, Rc)
             coord = (coord - self.Rc) * self.scale + self.Rc
-            coord = [factor * coord[i] + self.lower + self.trigger[i] - self.center[i] for i in range(len(coord))]
+            coord = factor * coord + self.lower + self.trigger - self.center
             coords.append(coord)
         
         return coords
@@ -55,7 +55,7 @@ class LichtenbergAlgorithm:
                 raise ValueError("Filename must be provided for M=2")
             self.filename = kwargs['filename']
         
-        self.ref = kwargs.get('ref', 0) # consider adding refinment decay over time to favor exploitation in the long run
+        self.ref = kwargs.get('ref', 0) # consider adding refinement decay over time to favor exploitation in the long run
         self.experience = {"it": [], "fitness": [], "coords": [], "samples": []}
         
     def optimize(self, J, n_iter: int, pop: int):
@@ -64,7 +64,7 @@ class LichtenbergAlgorithm:
         
         trigger = J.center()
         best_coords = trigger
-        best_fitness = J.evaluate(*trigger)
+        best_fitness = J.evaluate(trigger)
 
         lf = LichtenbergFigure(grid, trigger, J.bounds())
 
@@ -78,8 +78,8 @@ class LichtenbergAlgorithm:
                 local_pop = lf2.sample(int(pop * 0.6))
                 samples = global_pop + local_pop
             
-            sample_fitnesses = [(J.evaluate(*s), s) for s in samples]
-            min_fitness, min_sample = min(sample_fitnesses)
+            sample_fitnesses = [(J.evaluate(s), s) for s in samples]
+            min_fitness, min_sample = min(sample_fitnesses, key=lambda x: x[0])
 
             if min_fitness < best_fitness:
                 best_fitness = min_fitness
