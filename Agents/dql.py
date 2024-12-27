@@ -9,7 +9,7 @@ from tqdm import tqdm
 from itertools import count
 from IPython import display
 
-class DQNAgent(Agent):
+class DQLAgent(Agent):
     def __init__(self, input_dim, output_dim, hidden_dim=64,
                  hidden_layers=5, gamma=0.99, tau=0.005,
                  min_epsilon=0.1, epsilon_decay=0.999,
@@ -101,7 +101,7 @@ class DQNAgent(Agent):
         self.target_net.load_state_dict(self.policy_net.state_dict())
         self.target_net.eval()
     
-class DQNTrainer:
+class DQLTrainer:
     def __init__(self, env, agent, featurizer, gamma=0.99):
         self.env = env
         self.agent = agent
