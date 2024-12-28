@@ -11,7 +11,7 @@ from IPython import display
 
 class DQLAgent(Agent):
     def __init__(self, input_dim, output_dim, hidden_dim=64,
-                 hidden_layers=5, gamma=0.99, tau=0.005,
+                 hidden_layers=1, gamma=0.99, tau=0.005,
                  min_epsilon=0.1, epsilon_decay=0.999,
                  batch_size=32, buffer_capacity=10000):
         super().__init__(buffer_capacity)
@@ -102,11 +102,10 @@ class DQLAgent(Agent):
         self.target_net.eval()
     
 class DQLTrainer:
-    def __init__(self, env, agent, featurizer, gamma=0.99):
+    def __init__(self, env, agent, featurizer):
         self.env = env
         self.agent = agent
         self.featurizer = featurizer
-        self.gamma = gamma
         self.losses = []
         self.durations = []
 
