@@ -32,7 +32,7 @@ class LichtenbergFigure:
         return coords
     
     def rand_transform(self, trigger):
-        self.scale = np.random.uniform(0.01, 1)
+        self.scale = np.random.uniform(0.01, 2)
         self.rot = np.random.uniform(0, 2*np.pi)
         self.trigger = trigger
 
@@ -55,7 +55,10 @@ class LichtenbergAlgorithm:
                 raise ValueError("Filename must be provided for M=2")
             self.filename = kwargs['filename']
         
-        self.ref = kwargs.get('ref', 0) # consider adding refinement decay over time to favor exploitation in the long run
+        defaults = {"ref": 0}
+        kwargs = {**defaults, **kwargs}
+        
+        self.ref = kwargs['ref']
         self.experience = {"it": [], "fitness": [], "coords": [], "samples": []}
         
     def optimize(self, J, n_iter: int, pop: int):
