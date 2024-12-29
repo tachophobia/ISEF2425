@@ -14,7 +14,7 @@ class ContinuousSubmarine(gym.Env):
         defaults = {
             'width': 50,
             'height': 55,
-            'start_pos': (1, 1),
+            'start_pos': (2, 2),
             'terminal_width': 5,
             'terminal_height': 5,
             'max_y': {0: 10, 5: 15, 10: 20, 15: 25, 20: 25, 25: 25, 30: 40, 35: 40, 40: 50, 45: 55},
@@ -22,7 +22,8 @@ class ContinuousSubmarine(gym.Env):
             'max_timesteps': 500,
             'delta_t': 0.2,
             'drag_coefficient': 0.05,
-            'time_penalty': 0.1
+            'time_penalty': 0.1,
+            'randomize': False
         }
         params = {**defaults, **kwargs}
 
@@ -64,10 +65,13 @@ class ContinuousSubmarine(gym.Env):
         self.delta_t = params['delta_t']
 
         self.drag_coefficient = params['drag_coefficient']
+        self.randomize = params['randomize']
 
     def reset(self):
         """Reset the environment to the initial state."""
         self.state = [*self.initial_state]
+        if self.randomize:
+            self.state = [self.initial_state[0], np.random.randint(0, self.width), np.random.random() * 2 - 1, np.random.random() * 8 - 4]
         self.timestep = 0
         return np.array(self.state, dtype=np.float32), {} # return the state and info
 
@@ -178,7 +182,7 @@ class ContinuousSubmarine(gym.Env):
 
 
 if __name__ == "__main__":
-    env = ContinuousSubmarine()
+    env = ContinuousSubmarine(randomize=True)
     state = env.reset()
     done = False
 
