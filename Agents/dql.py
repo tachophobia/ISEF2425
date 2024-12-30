@@ -9,9 +9,9 @@ from tqdm import tqdm
 from itertools import count
 from IPython import display
 
-class DQNAgent(Agent):
+class DQLAgent(Agent):
     def __init__(self, input_dim, output_dim, hidden_dim=64,
-                 hidden_layers=5, gamma=0.99, tau=0.005,
+                 hidden_layers=1, gamma=0.99, tau=0.005,
                  min_epsilon=0.1, epsilon_decay=0.999,
                  batch_size=32, buffer_capacity=10000):
         """Initialize a deep Q-learning agent.
@@ -45,8 +45,17 @@ class DQNAgent(Agent):
         self.criterion = torch.nn.SmoothL1Loss()
         self.device = self.target_net.device
     
-    def select_action(self, state, explore=False):
-        """Select and return the next action either from existing policy or random, which occurs a percent of time determined by epsilon."""
+    def act(self, state, explore=False):
+        """
+        Select the next action based on the agent's policy.
+        
+        Args:
+            state: the current state of the agent.
+            explore: whether exploration is allowed.
+
+        Returns:
+            the selected action.
+        """
         if explore and random.random() < self.epsilon:
             action = torch.tensor([[random.randrange(self.action_dim)]], device=self.device, dtype=torch.long)
         else:
@@ -65,7 +74,7 @@ class DQNAgent(Agent):
         if self.epsilon > self.min_epsilon:
             self.epsilon *= self.decay
     
-    def update(self):
+    def learn(self):
         if len(self) < self.batch_size:
             return
         
@@ -94,6 +103,9 @@ class DQNAgent(Agent):
         loss.backward()
         self.optimizer.step()
         torch.nn.utils.clip_grad_value_(self.policy_net.parameters(), 100)
+        
+        self.step()
+
         return loss.item()
     
     def load(self, filepath):
@@ -101,12 +113,11 @@ class DQNAgent(Agent):
         self.target_net.load_state_dict(self.policy_net.state_dict())
         self.target_net.eval()
     
-class DQNTrainer:
-    def __init__(self, env, agent, featurizer, gamma=0.99):
+class DQLTrainer:
+    def __init__(self, env, agent, featurizer):
         self.env = env
         self.agent = agent
         self.featurizer = featurizer
-        self.gamma = gamma
         self.losses = []
         self.durations = []
 
@@ -118,7 +129,7 @@ class DQNTrainer:
         total_reward = 0.
         frames = []
         while not done:
-            action = self.agent.select_action(state, explore=False)
+            action = self.agent.act(state, explore=False)
 
             next_state, reward, terminated, truncated, _ = self.env.step(self.env.action_space[action])
             done = terminated or truncated
@@ -144,7 +155,7 @@ class DQNTrainer:
 
             done = False
             for t in count():
-                action = self.agent.select_action(state, explore=True)
+                action = self.agent.act(state, explore=True)
 
                 next_state, reward, terminated, truncated, _ = self.env.step(self.env.action_space[action])
                 done = terminated or truncated
@@ -156,10 +167,9 @@ class DQNTrainer:
 
                 state = next_state
 
-                loss = self.agent.update()
+                loss = self.agent.learn()
                 if loss is not None:
                     self.losses.append(loss)
-                self.agent.step()
 
                 if done:
                     self.durations.append(t + 1)

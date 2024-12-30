@@ -101,59 +101,6 @@ class DielectricBreakdownModel:
         for c, delta in zip(self.candidates, delta_potentials):
             c.phi += delta
 
-    def add_line_of_charge(self, p1, p2, phi=-1):
-        # create a line starting from p1 to p2
-        x0, y0, x1, y1 = p1[0], p1[1], p2[0], p2[1]
-        dx = abs(x1-x0)
-        sx = [-1, 1][x0 < x1]
-        dy = -abs(y1-y0)
-        sy = [-1, 1][y0 < y1]
-        error = dx + dy
-
-        while True:
-            if not (0 <= x0 < self.grid.shape[0] and 0 <= y0 < self.grid.shape[1]):
-                break
-            cell = Cell(x0, y0, phi)
-            self.grid[x0, y0] = phi
-
-            self.environment.append(cell)
-
-            if (x0 == x1 and y0 == y1):
-                break
-            e2 = 2 * error
-            if e2 > dy:
-                error += dy
-                x0 += sx
-            if e2 < dx:
-                error += dx
-                y0 += sy
-            x0 = int(x0)
-            y0 = int(y0)
-
-    def add_circle_of_charge(self, center, radius, phi=-1):
-        # create a circle centered at center with radius radius
-        x0, y0 = center
-        theta = 0
-        visited = set()
-        while theta < 2*np.pi:
-            x = int(x0 + radius * np.cos(theta))
-            y = int(y0 + radius * np.sin(theta))
-            if (x, y) not in visited and 0 <= x < self.grid.shape[0] and 0 <= y < self.grid.shape[1]:
-                cell = Cell(x, y, phi)
-                self.grid[x, y] = phi
-                self.environment.append(cell)
-            theta += 0.01
-            visited.add((x, y))
-    
-    def add_rectangle_of_charge(self, p1, p2, phi=-1):
-        x0, y0, x1, y1 = int(p1[0]), int(p1[1]), int(p2[0]), int(p2[1])
-        for x in range(x0, x1):
-            for y in range(y0, y1):
-                if 0 <= x < self.grid.shape[0] and 0 <= y < self.grid.shape[1]:
-                    cell = Cell(x, y, phi)
-                    self.grid[x, y] = phi
-                    self.environment.append(cell)
-
     def show(self, show_environment=False):
         img = self.grid
         if not show_environment:
