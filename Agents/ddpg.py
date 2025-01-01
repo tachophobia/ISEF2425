@@ -115,7 +115,7 @@ class ActionValueFunction(ObjectiveFunction):
 
 
 class LichtenbergAgent(DDPGAgent):
-    def __init__(self, state_size, action_size, figure_path, hidden_dim=64,
+    def __init__(self, state_size, action_size, figure_path, n_iter=3, pop=30, hidden_dim=64,
                   hidden_layers=1, gamma=0.99, tau=0.005, noise=0.1,
                  batch_size=128, alpha=1e-3, buffer_capacity=10000):
         super().__init__(state_size=state_size,
@@ -131,23 +131,26 @@ class LichtenbergAgent(DDPGAgent):
         
         self.la = LichtenbergAlgorithm(M=2, filename=figure_path)
         self.q_approximator = ActionValueFunction(self.critic, action_size)
+        self.n_iter = n_iter
+        self.pop = pop
 
     def act(self, state, explore=False):
         if explore:
             self.q_approximator.state = state
             self.q_approximator.trigger = np.random.normal(0, self.noise, size=self.action_size)
-            action = self.la.optimize(self.q_approximator, n_iter=3, pop=30)
+            action = self.la.optimize(self.q_approximator, n_iter=self.n_iter, pop=self.pop)
             action = torch.tensor(action, dtype=torch.float32).unsqueeze(0).to(self.device)
             return action
         return self.actor(state)
 
 
 class DDPGTrainer:
-    def __init__(self, env, agent, featurizer, gamma=0.99, **kwargs):
+    def __init__(self, env, agent, featurizer, **kwargs):
         self.env = env
         self.agent = agent
+        if isinstance(agent, str):
+            self.agent = pickle.load(open(agent, 'rb'))
         self.featurizer = featurizer
-        self.gamma = gamma
         self.episode_rewards = []
         self.critic_losses = []
         self.actor_losses = []
@@ -187,10 +190,9 @@ class DDPGTrainer:
             
             if e % 100 == 0 and self.has_converged():
                 print(f"Converged at episode {e}")
-                print(self.has_converged())
                 break
     
-    def has_converged(self, episodes=100):
+    def has_converged(self, episodes=1):
         if self.check_convergence:
             rewards = []
             for _ in range(episodes): # run several episodes in case environment isn't deterministic
@@ -199,8 +201,8 @@ class DDPGTrainer:
         return False
 
     def run_episode(self, render=True):
-        state, _ = self.env.reset()
-        state = self.featurizer.transform_state(state)
+        state, info = self.env.reset()
+        state = self.featurizer.transform_state(state, info)
         frames = []
         actions = []
         total_reward = 0.0
@@ -210,11 +212,11 @@ class DDPGTrainer:
             action = self.agent.act(state, explore=False)
             a = self.featurizer.transform_action(action, self.env.action_space.low, self.env.action_space.high)
             actions.append(a)
-            next_state, reward, terminated, truncated, _ = self.env.step(a)
+            next_state, reward, terminated, truncated, info = self.env.step(a)
 
             done = terminated or truncated
             total_reward += reward
-            state = self.featurizer.transform_state(next_state)
+            state = self.featurizer.transform_state(next_state, info)
             if render:
                 frames.append(self.env.render())
         
@@ -234,6 +236,6 @@ class DDPGTrainer:
         plt.title("Episode Rewards")
         plt.show()
 
-    def save(self, path='trainer.pkl'):
-        with open(path, 'wb') as f:
-            pickle.dump(self, f)
+    def save(self, filepath="agent.pkl"):
+        with open(filepath, "wb") as f:
+            pickle.dump(self.agent, f)
