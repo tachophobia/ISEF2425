@@ -111,23 +111,14 @@ class ActionValueFunction(ObjectiveFunction):
     def evaluate(self, X):
         action = torch.tensor(X, dtype=torch.float32).unsqueeze(0)
         state_action = torch.cat([self.state, action], dim=1)
-        return -self.net(state_action).item()
+        return self.net(state_action).item()
 
 
 class LichtenbergAgent(DDPGAgent):
     def __init__(self, state_size, action_size, figure_path, n_iter=3, pop=30, hidden_dim=64,
                   hidden_layers=1, gamma=0.99, tau=0.005, noise=0.1,
                  batch_size=128, alpha=1e-3, buffer_capacity=10000):
-        super().__init__(state_size=state_size,
-                         action_size=action_size,
-                         hidden_dim=hidden_dim,
-                         hidden_layers=hidden_layers,
-                         gamma=gamma, 
-                         tau=tau, 
-                         noise=noise,
-                         batch_size=batch_size,
-                         alpha=alpha,
-                         buffer_capacity=buffer_capacity)
+        super().__init__(state_size, action_size, hidden_dim, hidden_layers, gamma, tau, noise, batch_size, alpha, buffer_capacity)
         
         self.la = LichtenbergAlgorithm(M=2, filename=figure_path)
         self.q_approximator = ActionValueFunction(self.critic, action_size)
@@ -138,7 +129,7 @@ class LichtenbergAgent(DDPGAgent):
         if explore:
             self.q_approximator.state = state
             self.q_approximator.trigger = np.random.normal(0, self.noise, size=self.action_size)
-            action = self.la.optimize(self.q_approximator, n_iter=self.n_iter, pop=self.pop)
+            action = self.la.optimize(self.q_approximator, n_iter=self.n_iter, pop=self.pop, minimize=False, save=False)
             action = torch.tensor(action, dtype=torch.float32).unsqueeze(0).to(self.device)
             return action
         return self.actor(state)
@@ -192,7 +183,7 @@ class DDPGTrainer:
                 print(f"Converged at episode {e}")
                 break
     
-    def has_converged(self, episodes=1):
+    def has_converged(self, episodes=50):
         if self.check_convergence:
             rewards = []
             for _ in range(episodes): # run several episodes in case environment isn't deterministic
