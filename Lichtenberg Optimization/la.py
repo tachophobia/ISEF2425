@@ -45,7 +45,7 @@ class LichtenbergFigure:
 
 
 class LichtenbergAlgorithm:
-    # based on "Lichtenberg algorithm: A novel hybrid physics-based meta-heuristic for global optimization" by Pereira et al.
+    # based on "Lichtenberg algorithm: A novel hybrid physics-based meta-heuristic for global optimization" by Pereira et al. (2021)
 
     def __init__(self, M: int, **kwargs):
         self.M = M
@@ -61,7 +61,7 @@ class LichtenbergAlgorithm:
         self.ref = kwargs['ref']
         self.experience = {"it": [], "fitness": [], "coords": [], "samples": []}
         
-    def optimize(self, J, n_iter: int, pop: int):
+    def optimize(self, J, n_iter: int, pop: int, minimize=True, save=True):
         if self.M == 2:
             grid = np.load(self.filename)
         
@@ -82,16 +82,17 @@ class LichtenbergAlgorithm:
                 samples = global_pop + local_pop
             
             sample_fitnesses = [(J.evaluate(s), s) for s in samples]
-            min_fitness, min_sample = min(sample_fitnesses, key=lambda x: x[0])
+            min_fitness, min_sample = min(sample_fitnesses) if minimize else max(sample_fitnesses)
 
             if min_fitness < best_fitness:
                 best_fitness = min_fitness
                 best_coords = min_sample
-                
-            self.experience["it"].append(it)
-            self.experience["fitness"].append(best_fitness)
-            self.experience["coords"].append(best_coords)
-            self.experience["samples"].extend(samples)
+            
+            if save:
+                self.experience["it"].append(it)
+                self.experience["fitness"].append(best_fitness)
+                self.experience["coords"].append(best_coords)
+                self.experience["samples"].extend(samples)
 
             trigger = best_coords
         
