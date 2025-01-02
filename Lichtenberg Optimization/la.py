@@ -82,11 +82,18 @@ class LichtenbergAlgorithm:
                 samples = global_pop + local_pop
             
             sample_fitnesses = [(J.evaluate(s), s) for s in samples]
-            min_fitness, min_sample = min(sample_fitnesses) if minimize else max(sample_fitnesses)
+            if minimize:
+                min_fitness, min_sample = min(sample_fitnesses, key=lambda x: x[0])
 
-            if min_fitness < best_fitness:
-                best_fitness = min_fitness
-                best_coords = min_sample
+                if min_fitness < best_fitness:
+                    best_fitness = min_fitness
+                    best_coords = min_sample
+            else:
+                max_fitness, max_sample = max(sample_fitnesses, key=lambda x: x[0])
+
+                if max_fitness > best_fitness:
+                    best_fitness = max_fitness
+                    best_coords = max_sample
             
             if save:
                 self.experience["it"].append(it)
