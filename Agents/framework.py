@@ -85,16 +85,21 @@ class FeedForwardNN(torch.nn.Module):
         self.load_state_dict(torch.load(filepath, weights_only=True))
 
 class StandardScaler:
-    def __init__(self, input_dim):
+    def __init__(self, input_dim, learn=True):
         self.mean = np.zeros(input_dim)
         self.var = np.ones(input_dim)
         self.count = 0
+        self.update = learn
 
     def transform_state(self, state, info=None):
+
         state = np.array(state)
-        self.count += 1
-        self.mean += (state - self.mean) / self.count
-        self.var += (state - self.mean) ** 2 / self.count
+
+        if self.update:
+            self.count += 1
+            self.mean += (state - self.mean) / self.count
+            self.var += (state - self.mean) ** 2 / self.count
+        
         normalized_state = (state - self.mean) / np.sqrt(self.var + 1e-8)
         return torch.tensor(normalized_state, dtype=torch.float32).unsqueeze(0)
     
