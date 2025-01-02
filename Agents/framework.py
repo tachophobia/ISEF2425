@@ -90,7 +90,7 @@ class StandardScaler:
         self.var = np.ones(input_dim)
         self.count = 0
 
-    def transform_state(self, state):
+    def transform_state(self, state, info=None):
         state = np.array(state)
         self.count += 1
         self.mean += (state - self.mean) / self.count

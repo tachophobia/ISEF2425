@@ -32,7 +32,7 @@ class LichtenbergFigure:
         return coords
     
     def rand_transform(self, trigger):
-        self.scale = np.random.uniform(0.01, 1)
+        self.scale = np.random.uniform(0.01, 2)
         self.rot = np.random.uniform(0, 2*np.pi)
         self.trigger = trigger
 
@@ -45,7 +45,7 @@ class LichtenbergFigure:
 
 
 class LichtenbergAlgorithm:
-    # based on "Lichtenberg algorithm: A novel hybrid physics-based meta-heuristic for global optimization" by Pereira et al.
+    # based on "Lichtenberg algorithm: A novel hybrid physics-based meta-heuristic for global optimization" by Pereira et al. (2021)
 
     def __init__(self, M: int, **kwargs):
         self.M = M
@@ -55,10 +55,13 @@ class LichtenbergAlgorithm:
                 raise ValueError("Filename must be provided for M=2")
             self.filename = kwargs['filename']
         
-        self.ref = kwargs.get('ref', 0) # consider adding refinement decay over time to favor exploitation in the long run
+        defaults = {"ref": 0}
+        kwargs = {**defaults, **kwargs}
+        
+        self.ref = kwargs['ref']
         self.experience = {"it": [], "fitness": [], "coords": [], "samples": []}
         
-    def optimize(self, J, n_iter: int, pop: int):
+    def optimize(self, J, n_iter: int, pop: int, minimize=True, save=True):
         if self.M == 2:
             grid = np.load(self.filename)
         
@@ -79,16 +82,24 @@ class LichtenbergAlgorithm:
                 samples = global_pop + local_pop
             
             sample_fitnesses = [(J.evaluate(s), s) for s in samples]
-            min_fitness, min_sample = min(sample_fitnesses, key=lambda x: x[0])
+            if minimize:
+                min_fitness, min_sample = min(sample_fitnesses, key=lambda x: x[0])
 
-            if min_fitness < best_fitness:
-                best_fitness = min_fitness
-                best_coords = min_sample
-                
-            self.experience["it"].append(it)
-            self.experience["fitness"].append(best_fitness)
-            self.experience["coords"].append(best_coords)
-            self.experience["samples"].extend(samples)
+                if min_fitness < best_fitness:
+                    best_fitness = min_fitness
+                    best_coords = min_sample
+            else:
+                max_fitness, max_sample = max(sample_fitnesses, key=lambda x: x[0])
+
+                if max_fitness > best_fitness:
+                    best_fitness = max_fitness
+                    best_coords = max_sample
+            
+            if save:
+                self.experience["it"].append(it)
+                self.experience["fitness"].append(best_fitness)
+                self.experience["coords"].append(best_coords)
+                self.experience["samples"].extend(samples)
 
             trigger = best_coords
         
