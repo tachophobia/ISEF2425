@@ -17,9 +17,9 @@ This repository is divided into folders based on the phases of the project and c
 
 The key to the algorithm used in this project is the generation of a Lichtenberg figure. There are two approaches to this generation contained in the Tree Generation folder: diffusion-limited aggregation (DLA) and dielectric breakdown model (DBM). Both are explained below:
 
-### DLA
+#### DLA
 
-### DBM
+#### DBM
 
 ### Lichtenberg Optimization
 
