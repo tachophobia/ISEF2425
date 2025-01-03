@@ -17,8 +17,9 @@ The key to the algorithm used in this project is the generation of a Lichtenberg
 
 This folder contains three files: 
 
-| func.py  | implementations of example functions to optimize  |
-| la.py   | the implementation of the Lichtenberg algorithm (LA, see below) |
+| :------------- | :--------------------------------------------------------------------------- |
+| func.py        | implementations of example functions to optimize                             |
+| la.py          | the implementation of the Lichtenberg algorithm (LA, see below)              |
 | optimize.ipynb | containing an annotated example of optimizing the Ackley function via the LA |
 
 #### Algorithm design
