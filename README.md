@@ -19,7 +19,7 @@ This folder contains three files:
 
 - **func.py,** containing implementations of example functions to optimize
 - **la.py,** containing the implementation of the Lichtenberg algorithm (LA, see below)
-- **optimize.ipynb,** contains an annotated example of optimizing the Ackley function via the LA
+- **optimize.ipynb,** containing an annotated example of optimizing the Ackley function via the LA
 
 #### Algorithm design
 
@@ -30,6 +30,10 @@ In this project, the LA is not used in isolation to optimize objective functions
 ### Agents
 
 ### Experimental Results
+
+This folder contains the materials associated with an electrochemical experiment conducted in a laboratory. We placed zinc onto a surface damp with copper(ii) sulfate solution, causing solid copper to deposit in a fractal pattern similar to a Lichtenberg figure. Images of two of these figures are shown in the "results" subfolder.
+
+These images were then processed to be dual-colored with the process_images.ipynb file, and then individual branches were cropped off (these can be seen for one of the images in the files called fractal_branch# in the branches subfolder). Analysis was then conducted on each individual branch with the fractal_analysis.py script to determine each branch's fractal dimensionality, a number typically between 1 and 2.
 
 ## Experimentation Methods
 
