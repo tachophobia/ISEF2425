@@ -7,17 +7,13 @@ This repository is the product of a research project exploring the use of **Lich
 Reinforcement learning is a branch of machine learning in which an agent learns within the framework of the Markov decision process, meaning that it takes actions to change its state and accordingly gain rewards. The agent’s ultimate goal is to maximize the total reward, which it learns about through its experience. However, in the process of learning, the agent must repeatedly decide whether to continue exploiting rewards from following what it has currently determined to be the optimal set of actions, or to explore another set of actions to see if higher rewards might be found with them. This is known as the explore-exploit dilemma or tradeoff.
 
 
-![A diagram of the Markov decision loop](https://ars.els-cdn.com/content/image/1-s2.0-S0029801822008666-gr3.jpg)
-
-The loop by which the agent interacts with the environment in RL
+![A diagram of the Markov decision loop](https://ars.els-cdn.com/content/image/1-s2.0-S0029801822008666-gr3.jpg "The loop by which the agent interacts with the environment in RL")
 
 
 Traditional methods of tackling this tradeoff involve a simple probabilistic choice, using a parameter called epsilon, but this is a slow approach. Heuristics attempt to expedite and guide this decision making by providing a rough approximation of when to explore and when to exploit. Metaheuristics, in turn, are heuristics which are adaptable and typically not tailored to a specific problem. Some of these metaheuristics are inspired by the physical world. One of these is the Lichtenberg algorithm (LA), which is based on Lichtenberg figures, the fractal patterns often created when electricity discharges on a surface.
 
 
-![An example of a Lichtenberg figure](file:///C:/Users/Aidan/OneDrive/Documents/GitHub/ISEF2425/Tree%20Generation/generations/eta5.dim1000.gif)
-
-An example Lichtenberg figure generated in this project (see below for methods)
+![An example of a Lichtenberg figure](eta5.dim1000.gif "An example Lichtenberg figure generated in this project (see below for methods)")
 
 
 This project utilizes the LA as a metaheuristic to address the explore-exploit tradeoff in a novel way. We modify the actor-critic format of the deep deterministic policy gradient (DDPG), a variety of deep Q-learning for continuous action spaces, by using the LA for exploration in place of the actor. Normally, the actor (i.e., the policy function approximator) interacts with the environment to gain experience based on information that is not up to date with the critic (i.e., the Q-function approximator), and thus training takes more episodes. We hypothesize that using the Lichtenberg-based metaheuristic to explore the search space instead of the usual actor, thus keeping the experience information more up to date and searching the environment more efficiently, will decrease the amount of training episodes needed for the agent to converge on a solution compared to current prominent methods.
@@ -30,6 +26,8 @@ This repository is divided into folders based on the phases of the project and c
 The key to the algorithm used in this project is the generation of a Lichtenberg figure. There are two approaches to this generation contained in the Tree Generation folder: diffusion-limited aggregation (DLA) and dielectric breakdown model (DBM). Both are explained below:
 
 #### DLA
+
+DLA is a method of figure generation that involves Brownian motion.
 
 #### DBM
 
