@@ -15,6 +15,7 @@ Reinforcement learning is a branch of machine learning in which an agent learns 
 Traditional methods of tackling this tradeoff involve a simple probabilistic choice, using a parameter called epsilon, but this is an inneficient approach. Heuristics attempt to expedite and guide this decision making by providing a rough approximation of when to explore and when to exploit. Metaheuristics, in turn, are heuristics which are adaptable and typically not tailored to a specific problem. Some of these metaheuristics are inspired by the physical world. One of these is the Lichtenberg algorithm (LA), which is based on Lichtenberg figures, the fractal patterns often created when electricity discharges on a surface.
 
 
+**[place Lichtenberg figure image here]**
 ![An example of a Lichtenberg figure](eta5.dim1000.gif "An example Lichtenberg figure generated in this project using DBM (see below for methods)")
 
 
@@ -32,6 +33,12 @@ DLA is
 #### DBM
 As opposed to DLA, DBM generation
 
+### Experimental Results
+
+This folder contains the materials associated with an electrochemical experiment conducted in a laboratory. We placed zinc onto a surface damp with copper(ii) sulfate solution, causing solid copper to deposit in a fractal pattern similar to a Lichtenberg figure. Images of two of these figures are shown in the "results" subfolder.
+
+These images were then processed to be dual-colored with the process_images.ipynb file, and then individual branches were cropped off (these can be seen for one of the images in the files called fractal_branch# in the branches subfolder). Analysis was then conducted on each individual branch with the fractal_analysis.py script to determine each branch's fractal dimensionality, a number typically between 1 and 2. The higher the dimensionality, the more complex the fractal.
+
 ### Lichtenberg Optimization
 
 This folder contains three files: 
@@ -42,31 +49,39 @@ This folder contains three files:
 
 #### Algorithm design
 
-Contained in the file la.py, the Lichtenberg algorithm (LA) was implemented based on the 2021 paper “Lichtenberg algorithm: A novel hybrid physics-based meta-heuristic for global optimization" by Pereira et al. **To be continued**
+Contained in the file la.py, the Lichtenberg algorithm (LA) was implemented based on the 2021 paper “Lichtenberg algorithm: A novel hybrid physics-based meta-heuristic for global optimization" by Pereira et al. ***To be continued***
 
-In this project, the LA is not used in isolation to optimize objective functions, but is instead used to partially optimize the value function approximation in place of the actor in the deep deterministic policy gradient method. For more, see the Agents section.
+In this project, the LA is not used in isolation to optimize objective functions, but is instead used to partially optimize the action value function approximation in our modified deep deterministic policy gradient method. For more, see the Agents section.
 
 ### Agents
 The Agents folder contains most of the critical project files. Here is a brief explanation of each:
 
 | File/Subfolder  | Description |
 | --------------- | ----------- |
-| environments    | insert here |
-| simulations     | insert here |
-| ddpg.py         | insert here |
-| dql.py          | insert here |
-| figure2d.npy    | insert here |
-| framework.py    | insert here |
-| test_agents.ipynb | insert here |
+| environments    | contains the classes of the environments used to test the agent, including submarine |
+| simulations     | contains gifs showing the results of experimental runs of our agent in various environments |
+| ddpg.py         | the benchmark DDPG agent (see below), our LA-based agent, and associated classes |
+| dql.py          | deep Q-learning, an established RL technique for discrete action spaces |
+| figure2d.npy    | the 2d Lichtenberg figure generated via DBM that was arbitrarily chosen for use in experimental trials |
+| framework.py    | the abstract "Agent" class and the setup of the neural network used as a value function approximator |
+| test_agents.ipynb | the script used to test our Lichtenberg agent against the benchmark DDPG agent |
 
-The Deep Deterministic Policy Gradient is a
-
-### Experimental Results
-
-This folder contains the materials associated with an electrochemical experiment conducted in a laboratory. We placed zinc onto a surface damp with copper(ii) sulfate solution, causing solid copper to deposit in a fractal pattern similar to a Lichtenberg figure. Images of two of these figures are shown in the "results" subfolder.
-
-These images were then processed to be dual-colored with the process_images.ipynb file, and then individual branches were cropped off (these can be seen for one of the images in the files called fractal_branch# in the branches subfolder). Analysis was then conducted on each individual branch with the fractal_analysis.py script to determine each branch's fractal dimensionality, a number typically between 1 and 2. The higher the dimensionality, the more complex the fractal.
+The Deep Deterministic Policy Gradient (DDPG) is a
 
 ## Experimentation Methods
+As shown in the test_agents.ipynb file, we tested our LA-based agent against the benchmark DDPG agent, which is similar to the well-established method of Q-learning. Both agents were set to the same parameters (shown in the table directly below) and underwent 30 full training runs for each of the environments until convergence. The number of episodes and the time taken to converge were recorded. The data for the submarine environment are shown in the results section below.
+
+Controlled Parameters for Agents during Trials
+***Add table here***
+
+Additionally, within the Lichtenberg algorithm, the parameters for our agent during trials were set to:
+
+- n_iter = 3
+- pop = 15
 
 ## Results
+
+Submarine Environment Convergence Data
+***Add table here***
+
+### Statistical Testing
