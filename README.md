@@ -37,7 +37,25 @@ As opposed to DLA, DBM generation
 
 This folder contains the materials associated with an electrochemical experiment conducted in a laboratory. We placed zinc onto a surface damp with copper(ii) sulfate solution, causing solid copper to deposit in a fractal pattern similar to a Lichtenberg figure. Images of two of these figures are shown in the "results" subfolder.
 
-These images were then processed to be dual-colored with the process_images.ipynb file, and then individual branches were cropped off (these can be seen for one of the images in the files called fractal_branch# in the branches subfolder). Analysis was then conducted on each individual branch with the fractal_analysis.py script to determine each branch's fractal dimensionality, a number typically between 1 and 2. The higher the dimensionality, the more complex the fractal.
+These images were then processed to be dual-colored with the **process_images.ipynb** file, and then individual branches were cropped off (these can be seen for one of the images in the files called fractal_branch# in the **branches** subfolder). Analysis was then conducted on each individual branch with the **fractal_analysis.py** script to determine each branch's fractal dimensionality, a number typically between 1 and 2. The higher the dimensionality, the more complex the fractal. A similar analysis was conducted for our DBM computer-generated figures, each generated with a different value of the eta parameter (see DBM explanation above), ranging from 4.0 to 5.5. We ran no statistical tests for comparison of the two, but the results showed that the physical and computer-generated figures both had dimensionalities from about 1.4-1.6, which we considered to be acceptably similar. In our later trials of our Lichtenberg agent, we used a Lichtenberg figure generated with eta set to 5.0, within the range of testing of this exercise. The full results are displayed here:
+
+Fractal Dimensionalities of Each Branch of Lab-Created Lichtenberg Figure
+| Branch Number | Dimensionality Estimate |
+| ------------- | ----------------------- |
+| 1 | 1.483 |
+| 2 | 1.527 |
+| 3 | 1.563 |
+| 4 | 1.438 |
+| 5 | 1.524 |
+
+Fractal Dimensionalities for DBM-generated Figures with Different Values of eta Parameter
+| eta value | Dimensionality Estimate |
+| --------- | ----------------------- |
+| 4.0 | 1.577 |
+| 4.5 | 1.521 |
+| 5.0 | 1.489 |
+| 5.5 | 1.396 |
+
 
 ### Lichtenberg Optimization
 
@@ -72,7 +90,17 @@ The Deep Deterministic Policy Gradient (DDPG) is a
 As shown in the test_agents.ipynb file, we tested our LA-based agent against the benchmark DDPG agent, which is similar to the well-established method of Q-learning. Both agents were set to the same parameters (shown in the table directly below) and underwent 30 full training runs for each of the environments until convergence. The number of episodes and the time taken to converge were recorded. The data for the submarine environment are shown in the results section below.
 
 Controlled Parameters for Agents during Trials
-***Add table here***
+
+| Parameter | Value |
+| --------- | ----- |
+| gamma     | 0.99  |
+| tau       | 0.05  |
+| noise     | 0.1   |
+| batch_size | 32   |
+| alpha     | 0.001 |
+| hidden_dim | 64   |
+| hidden_layers | 1 |
+For more information on what wach parameter does, view the documented files in the Agents folder.
 
 Additionally, within the Lichtenberg algorithm, the parameters for our agent during trials were set to:
 
@@ -82,6 +110,7 @@ Additionally, within the Lichtenberg algorithm, the parameters for our agent dur
 ## Results
 
 Submarine Environment Convergence Data
+
 ***Add table here***
 
 ### Statistical Testing
