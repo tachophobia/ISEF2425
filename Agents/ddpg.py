@@ -3,6 +3,7 @@ import pickle
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
+from collections import deque
 
 from tqdm import tqdm
 from framework import Agent, FeedForwardNN
@@ -146,9 +147,10 @@ class DDPGTrainer:
         self.critic_losses = []
         self.actor_losses = []
 
-        defaults = {"until_convergence": False}
+        defaults = {"until_convergence": False, "delay": 0}
         kwargs = {**defaults, **kwargs}
         self.check_convergence = kwargs['until_convergence']
+        self.delay = kwargs['delay']
         if self.check_convergence:
             assert "convergence_reward" in kwargs, "Convergence reward must be provided"
             self.convergence_reward = kwargs['convergence_reward']
@@ -157,20 +159,31 @@ class DDPGTrainer:
         for e in tqdm(range(episodes)):
             state, _ = self.env.reset()
             state = self.featurizer.transform_state(state)
-
             done = False
             total_reward = 0.0
+
+            state_buffer = deque([None] * self.delay + [state], maxlen=self.delay + 1)
+
             while not done:
-                action = self.agent.act(state, explore=True)
+                delayed_state = state_buffer[0]
+
+                if delayed_state is None:
+                    action = self.env.action_space.sample() * 0.0
+                    a = torch.from_numpy(action)
+                else:
+                    action = self.agent.act(delayed_state, explore=True)
+                    a = self.featurizer.transform_action(action, self.env.action_space.low, self.env.action_space.high)
                 
-                next_state, reward, terminated, truncated, _ = self.env.step(self.featurizer.transform_action(action, self.env.action_space.low, self.env.action_space.high))
+                next_state, reward, terminated, truncated, _ = self.env.step(a)
 
                 done = terminated or truncated
                 next_state = self.featurizer.transform_state(next_state) if not done else None
                 total_reward += reward
                 reward = torch.tensor([reward], dtype=torch.float32)
+                state_buffer.append(next_state)
 
-                self.agent.push([state, action, reward, next_state])
+                if delayed_state is not None:
+                    self.agent.push([delayed_state, action, reward, next_state])
                 state = next_state
 
             critic_loss, actor_loss = self.agent.learn()
@@ -183,7 +196,7 @@ class DDPGTrainer:
                 print(f"Converged at episode {e}")
                 break
     
-    def has_converged(self, episodes=50):
+    def has_converged(self, episodes=25):
         if self.check_convergence:
             rewards = []
             for _ in range(episodes): # run several episodes in case environment isn't deterministic
@@ -197,17 +210,24 @@ class DDPGTrainer:
         frames = []
         actions = []
         total_reward = 0.0
-
         done = False
+
+        state_buffer = deque([None] * self.delay + [state], maxlen=self.delay + 1)
         while not done:
-            action = self.agent.act(state, explore=False)
-            a = self.featurizer.transform_action(action, self.env.action_space.low, self.env.action_space.high)
-            actions.append(a)
-            next_state, reward, terminated, truncated, info = self.env.step(a)
+            delayed_state = state_buffer[0]
+            if delayed_state is None:
+                action = torch.from_numpy(self.env.action_space.sample() * 0.0)
+            else:
+                action = self.agent.act(delayed_state, explore=False)
+                action = self.featurizer.transform_action(action, self.env.action_space.low, self.env.action_space.high)
+            
+            actions.append(action)
+            next_state, reward, terminated, truncated, info = self.env.step(action)
 
             done = terminated or truncated
             total_reward += reward
             state = self.featurizer.transform_state(next_state, info)
+            state_buffer.append(state)
             if render:
                 frames.append(self.env.render())
         
