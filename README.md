@@ -99,7 +99,7 @@ The Agents folder contains most of the critical project files. Here is a brief e
 
 The deep deterministic policy gradient (DDPG) has been described as a counterpart of deep Q-learning (DQL) for continuous action spaces as opposed to discrete ones (INSERT SOURCE HERE). DDPG adapts DQL by using function approximators for both the action-value function, often symbolized as Q, and the policy, instead of using tables as DQL does. [**Add stuff here about actor and critic**]
 
-[**HERE EXPLAIN HOW LFs FIT INTO DDPG - Nikita?**]
+[**HERE EXPLAIN HOW LFs FIT INTO DDPG**]
 
 ## Experimentation Methods
 As shown in the test_agents.ipynb file, we tested our LA-based agent against the benchmark DDPG agent, which is similar to the well-established method of deep Q-learning. Both agents were set to the same parameters (shown in the table directly below) and underwent 30 full training runs for each of the environments until convergence. The number of episodes and the time taken to converge were recorded. The data for the submarine environment are shown in the results section below.
